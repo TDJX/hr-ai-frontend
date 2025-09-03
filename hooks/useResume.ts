@@ -38,7 +38,28 @@ export const useResumesByVacancy = (vacancyId: number) => {
     queryKey: ['resumes', 'by-vacancy', vacancyId],
     queryFn: () => resumeService.getResumes({ vacancy_id: vacancyId }),
     enabled: !!vacancyId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Не кешируем для частых обновлений
     retry: 2,
+    refetchInterval: false, // Отключаем автоматический refetch, управляем вручную
+  })
+}
+
+export const useValidateInterview = (resumeId: number, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['interview', 'validate', resumeId],
+    queryFn: () => resumeService.validateInterview(resumeId),
+    enabled: enabled && !!resumeId,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 минут
+  })
+}
+
+export const useInterviewToken = (resumeId: number, enabled: boolean = false) => {
+  return useQuery({
+    queryKey: ['interview', 'token', resumeId],
+    queryFn: () => resumeService.getInterviewToken(resumeId),
+    enabled: enabled && !!resumeId,
+    retry: false,
+    staleTime: 30 * 60 * 1000, // 30 минут - токены живут дольше
   })
 }

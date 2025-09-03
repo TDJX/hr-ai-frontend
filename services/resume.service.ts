@@ -48,4 +48,12 @@ export const resumeService = {
     const endpoint = `api/v1/resumes/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
     return kyClient.get(endpoint).json<ResumeRead[]>()
   },
+
+  async validateInterview(resumeId: number): Promise<{ can_interview: boolean; message?: string }> {
+    return kyClient.get(`api/v1/interview/${resumeId}/validate-interview`).json()
+  },
+
+  async getInterviewToken(resumeId: number): Promise<{ token: string; roomName: string; serverUrl: string }> {
+    return kyClient.post(`api/v1/interview/${resumeId}/token`).json()
+  },
 }

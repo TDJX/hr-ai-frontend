@@ -1,7 +1,7 @@
 export type EmploymentType = 'full' | 'part' | 'project' | 'volunteer' | 'probation'
 export type Experience = 'noExperience' | 'between1And3' | 'between3And6' | 'moreThan6'
 export type Schedule = 'fullDay' | 'shift' | 'flexible' | 'remote' | 'flyInFlyOut'
-export type ResumeStatus = 'pending' | 'under_review' | 'interview_scheduled' | 'interviewed' | 'rejected' | 'accepted'
+export type ResumeStatus = 'pending' | 'parsing' | 'parse_failed' | 'parsed' | 'under_review' | 'interview_scheduled' | 'interviewed' | 'rejected' | 'accepted'
 
 export interface VacancyRead {
   id: number

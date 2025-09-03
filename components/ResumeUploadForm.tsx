@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import InputMask from 'react-input-mask'
 import { ResumeCreate } from '@/types/api'
 import { useCreateResume, useResumesByVacancy } from '@/hooks/useResume'
-import { Upload, FileText, X, CheckCircle, Clock } from 'lucide-react'
+import { Upload, FileText, X, CheckCircle, Clock, Loader, AlertCircle } from 'lucide-react'
 
 interface ResumeUploadFormProps {
   vacancyId: number
@@ -24,10 +24,28 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
   const [success, setSuccess] = useState(false)
 
   const createResumeMutation = useCreateResume()
-  const { data: existingResumes, isLoading: isLoadingResumes } = useResumesByVacancy(vacancyId)
+  const { data: existingResumes, isLoading: isLoadingResumes, refetch } = useResumesByVacancy(vacancyId)
 
   // Проверяем есть ли уже резюме для этой вакансии в текущей сессии
   const hasExistingResume = existingResumes && existingResumes.length > 0
+
+  // Находим непарсенные резюме
+  const pendingResumes = existingResumes?.filter(resume => 
+    resume.status === 'pending' || resume.status === 'parsing'
+  ) || []
+  
+  const hasPendingResumes = pendingResumes.length > 0
+
+  // Автообновление для непарсенных резюме
+  useEffect(() => {
+    if (hasPendingResumes) {
+      const interval = setInterval(() => {
+        refetch()
+      }, 3000) // 3 секунды
+
+      return () => clearInterval(interval)
+    }
+  }, [hasPendingResumes, refetch])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -125,42 +143,212 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
     )
   }
 
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'Обрабатывается'
+      case 'parsing':
+        return 'Обрабатывается'
+      case 'parse_failed':
+        return 'Ошибка обработки'
+      case 'parsed':
+        return 'Обработано'
+      case 'under_review':
+        return 'На проверке'
+      case 'interview_scheduled':
+        return 'Собеседование назначено'
+      case 'interviewed':
+        return 'Проведено собеседование'
+      case 'accepted':
+        return 'Принят'
+      case 'rejected':
+        return 'Отклонен'
+      default:
+        return status
+    }
+  }
+
+  // Обработка ошибок парсинга
+  const hasParseFailedResumes = existingResumes?.some(resume => resume.status === 'parse_failed') || false
+
+  if (hasParseFailedResumes) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
+          <div>
+            <h3 className="text-lg font-medium text-red-800">
+              Ошибка обработки резюме
+            </h3>
+            <p className="mt-2 text-red-700">
+              Не удалось обработать ваше резюме. Попробуйте загрузить файл в другом формате (PDF, DOC, DOCX, TXT) 
+              или обратитесь к нам за помощью.
+            </p>
+            <div className="mt-4 space-y-2">
+              {existingResumes?.map((resume) => (
+                <div key={resume.id} className="flex items-center text-sm">
+                  <span className="text-red-600">
+                    Отправлено: {new Date(resume.created_at).toLocaleDateString('ru-RU', {
+                      day: 'numeric',
+                      month: 'long',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })} • Статус: {getStatusDisplay(resume.status)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Попробовать снова
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Показываем крутилку для статусов pending/parsing
+  if (hasPendingResumes) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+        <Loader className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
+        <div className="flex items-center justify-center mb-4">
+          <h3 className="text-2xl font-bold text-blue-800 mr-3">
+            Обрабатываем ваше резюме...
+          </h3>
+        </div>
+        <p className="text-blue-700 mb-6 max-w-md mx-auto">
+          Пожалуйста, подождите. Мы анализируем ваше резюме и готовим персональные вопросы для собеседования.
+        </p>
+        <div className="space-y-2">
+          {existingResumes?.map((resume) => (
+            <div key={resume.id} className="flex items-center justify-center text-sm">
+              <span className="text-blue-600">
+                Отправлено: {new Date(resume.created_at).toLocaleDateString('ru-RU', {
+                  day: 'numeric',
+                  month: 'long',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+                <br />Статус: {getStatusDisplay(resume.status)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Обычное успешное состояние для parsed и других завершенных статусов
   if (success || hasExistingResume) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <div className="flex items-center">
-          <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
-          <div>
-            <h3 className="text-lg font-medium text-green-800">
-              {success ? 'Резюме успешно отправлено!' : 'Ваше резюме уже отправлено!'}
-            </h3>
-            <p className="mt-2 text-green-700">
-              Готовим для вас сессию для собеседования. Мы свяжемся с вами в ближайшее время.
-            </p>
-            {hasExistingResume && existingResumes && (
-              <div className="mt-4 space-y-2">
-                {existingResumes.map((resume) => (
-                  <div key={resume.id} className="flex items-center text-sm text-green-600">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>
-                      Отправлено: {new Date(resume.created_at).toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'long',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })} • Статус: {resume.status === 'pending' ? 'На рассмотрении' : 
-                        resume.status === 'under_review' ? 'На проверке' :
-                        resume.status === 'interview_scheduled' ? 'Собеседование назначено' :
-                        resume.status === 'interviewed' ? 'Проведено собеседование' :
-                        resume.status === 'accepted' ? 'Принят' :
-                        resume.status === 'rejected' ? 'Отклонен' : resume.status}
-                    </span>
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        {hasExistingResume && existingResumes && existingResumes.map((resume) => (
+          <div key={resume.id} className="p-6 border-b border-gray-100 last:border-b-0">
+            {/* Status and Date Row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Резюме
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(resume.created_at).toLocaleDateString('ru-RU', {
+                      day: '2-digit',
+                      month: '2-digit', 
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+              
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                resume.status === 'parsed' 
+                  ? 'bg-green-100 text-green-800'
+                  : resume.status === 'parsing' || resume.status === 'pending'
+                  ? 'bg-yellow-100 text-yellow-800' 
+                  : resume.status === 'parse_failed'
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {getStatusDisplay(resume.status)}
+              </span>
+            </div>
+
+            {/* Content based on status */}
+            {resume.status === 'parsed' && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-green-900 mb-2">
+                    Мы готовы!
+                  </h4>
+                  <p className="text-sm text-green-700 mb-4">
+                    Ваше резюме успешно обработано. Можете приступать к интервью с HR агентом.
+                  </p>
+                  <a
+                    href={`/interview/${resume.id}`}
+                    className="inline-flex items-center px-6 py-3 bg-green-600 border border-transparent rounded-lg font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105"
+                  >
+                    Начать собеседование
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {(resume.status === 'parsing' || resume.status === 'pending') && (
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600 mr-3"></div>
+                  <div>
+                    <h4 className="text-sm font-medium text-yellow-900">
+                      Обрабатываем ваше резюме
+                    </h4>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Анализируем опыт и готовим персональные вопросы
+                    </p>
                   </div>
-                ))}
+                </div>
+              </div>
+            )}
+
+            {resume.status === 'parse_failed' && (
+              <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="h-5 w-5 text-red-600 mr-3">⚠️</div>
+                  <div>
+                    <h4 className="text-sm font-medium text-red-900">
+                      Ошибка обработки
+                    </h4>
+                    <p className="text-xs text-red-700 mt-1">
+                      Попробуйте загрузить файл в другом формате
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!['parsed', 'parsing', 'pending', 'parse_failed'].includes(resume.status) && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <div className="text-center">
+                  <h4 className="text-sm font-medium text-blue-900 mb-1">
+                    {getStatusDisplay(resume.status)}
+                  </h4>
+                  <p className="text-xs text-blue-700">
+                    Мы свяжемся с вами для следующих шагов
+                  </p>
+                </div>
               </div>
             )}
           </div>
-        </div>
+        ))}
       </div>
     )
   }
