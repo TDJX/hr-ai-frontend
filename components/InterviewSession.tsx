@@ -123,6 +123,9 @@ function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
         isConnected: false, 
         connectionState: 'disconnected' 
       }))
+      if (onEnd) {
+        onEnd()
+      }
     }
 
     const handleDataReceived = (payload: Uint8Array, participant: any) => {

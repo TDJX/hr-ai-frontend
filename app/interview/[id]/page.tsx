@@ -14,7 +14,7 @@ export default function InterviewPage() {
 
   const handleInterviewEnd = () => {
     // Перенаправляем обратно к вакансии или на главную страницу
-    router.push('/')
+    router.back()
   }
 
   if (isLoading) {
