@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Room, RoomEvent, Track, RemoteTrack, LocalTrack } from 'livekit-client'
 import { useTracks, RoomAudioRenderer, LiveKitRoom, useRoomContext } from '@livekit/components-react'
 import { useInterviewToken } from '@/hooks/useResume'
+import { useForceEndInterview } from '@/hooks/useSession'
 import { 
   Mic, 
   MicOff, 
@@ -18,6 +19,7 @@ import {
 
 interface InterviewSessionProps {
   resumeId: number
+  sessionId: number
   onEnd?: () => void
 }
 
@@ -80,17 +82,19 @@ export default function InterviewSession({ resumeId, onEnd }: InterviewSessionPr
           console.error('LiveKit error:', error)
         }}
       >
-        <InterviewRoom resumeId={resumeId} onEnd={onEnd} />
+        <InterviewRoom resumeId={resumeId} onEnd={onEnd} sessionId={tokenData.session_id} />
       </LiveKitRoom>
     </div>
   )
 }
 
-function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
+function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
   const room = useRoomContext()
   const tracks = useTracks([Track.Source.Microphone, Track.Source.ScreenShare], {
     onlySubscribed: false,
   })
+  
+  const forceEndMutation = useForceEndInterview()
   
   const [state, setState] = useState<InterviewState>({
     isConnected: false,
@@ -138,12 +142,10 @@ function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
     }
 
     room.on(RoomEvent.Connected, handleConnected)
-    room.on(RoomEvent.Disconnected, handleDisconnected)
     room.on(RoomEvent.DataReceived, handleDataReceived)
 
     return () => {
       room.off(RoomEvent.Connected, handleConnected)
-      room.off(RoomEvent.Disconnected, handleDisconnected)
       room.off(RoomEvent.DataReceived, handleDataReceived)
     }
   }, [room])
@@ -178,6 +180,8 @@ function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
       case 'ai_speaking_end':
         setAiSpeaking(false)
         break
+      case 'interview_started':
+        break
       case 'interview_complete':
         // Собеседование завершено
         if (onEnd) onEnd()
@@ -209,6 +213,13 @@ function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
     if (!room) return
 
     try {
+      // Если есть sessionId, используем force-end API
+      if (sessionId) {
+        console.log('Starting force-end mutation for sessionId:', sessionId)
+        await forceEndMutation.mutateAsync(sessionId)
+        console.log('Force-end mutation completed successfully')
+      }
+
       // Отправляем сигнал серверу о завершении собеседования
       await room.localParticipant.publishData(
         new TextEncoder().encode(JSON.stringify({
@@ -217,11 +228,26 @@ function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
         })),
         { reliable: true }
       )
-      
+
+      setState(prev => ({
+        ...prev,
+        isConnected: false,
+        connectionState: 'disconnected'
+      }))
+
+      // Отключение происходит только после успешного выполнения всех операций
       room.disconnect()
+      console.log('About to call onEnd - this will cause redirect')
+      // Временно отключаем редирект для проверки логов
       if (onEnd) onEnd()
     } catch (error) {
       console.error('Error ending interview:', error)
+      // В случае ошибки всё равно отключаемся
+      setState(prev => ({
+        ...prev,
+        isConnected: false,
+        connectionState: 'disconnected'
+      }))
       room.disconnect()
       if (onEnd) onEnd()
     }
@@ -305,8 +331,10 @@ function InterviewRoom({ resumeId, onEnd }: InterviewSessionProps) {
 
         {/* Instructions */}
         <div className="text-center text-sm text-gray-500 space-y-1">
-          <p>Говорите четко и ждите, пока агент закончит свой вопрос</p>
-          <p>Для завершения собеседования нажмите красную кнопку</p>
+          <p>Для начала диалога поприветствуйте интервьюера</p>
+          <p>В процессе говорите четко и ждите, пока агент закончит свой вопрос</p>
+          <p>Собеседование завершится автоматически</p>
+          <p>Экстренно завершить собеседование можно, нажав красную кнопку</p>
         </div>
       </div>
     </div>

@@ -1,7 +1,6 @@
 import ky from 'ky'
 
-// Используем прокси Next.js для избежания CORS проблем
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'
 
 // Базовый клиент без Content-Type заголовка
 const baseKyClient = ky.create({

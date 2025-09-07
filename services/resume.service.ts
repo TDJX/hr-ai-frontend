@@ -21,17 +21,18 @@ export const resumeService = {
 
     // Логируем данные для отладки
     console.log('FormData entries:')
+    // @ts-ignore
     for (const [key, value] of formData.entries()) {
       console.log(key, value)
     }
 
-    return kyFormClient.post('api/v1/resumes/', {
+    return kyFormClient.post('v1/resumes/', {
       body: formData,
     }).json<ResumeRead>()
   },
 
   async getResume(id: number): Promise<ResumeRead> {
-    return kyClient.get(`api/v1/resumes/${id}`).json<ResumeRead>()
+    return kyClient.get(`v1/resumes/${id}`).json<ResumeRead>()
   },
 
   async getResumes(params?: GetResumesParams): Promise<ResumeRead[]> {
@@ -45,15 +46,15 @@ export const resumeService = {
       })
     }
 
-    const endpoint = `api/v1/resumes/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+    const endpoint = `v1/resumes/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
     return kyClient.get(endpoint).json<ResumeRead[]>()
   },
 
   async validateInterview(resumeId: number): Promise<{ can_interview: boolean; message?: string }> {
-    return kyClient.get(`api/v1/interview/${resumeId}/validate-interview`).json()
+    return kyClient.get(`v1/interview/${resumeId}/validate-interview`).json()
   },
 
-  async getInterviewToken(resumeId: number): Promise<{ token: string; roomName: string; serverUrl: string }> {
-    return kyClient.post(`api/v1/interview/${resumeId}/token`).json()
+  async getInterviewToken(resumeId: number): Promise<{ token: string; roomName: string; serverUrl: string; session_id: number }> {
+    return kyClient.post(`v1/interview/${resumeId}/token`).json()
   },
 }

@@ -40,3 +40,11 @@ export const useSessionHealth = () => {
     retry: 2,
   })
 }
+
+export const useForceEndInterview = () => {
+  return useMutation({
+    mutationFn: (sessionId: number) => sessionService.forceEndInterview(sessionId),
+    retry: false, // Не повторяем запрос при ошибке
+    networkMode: 'always',
+  })
+}

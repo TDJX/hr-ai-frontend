@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+// @ts-ignore
 import InputMask from 'react-input-mask'
 import { ResumeCreate } from '@/types/api'
 import { useCreateResume, useResumesByVacancy } from '@/hooks/useResume'
@@ -63,9 +64,7 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
       // Check file type
       const allowedTypes = [
         'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ]
       
       if (!allowedTypes.includes(selectedFile.type)) {
@@ -162,7 +161,7 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
       case 'accepted':
         return 'Принят'
       case 'rejected':
-        return 'Отклонен'
+        return 'Отклонено'
       default:
         return status
     }
@@ -181,7 +180,7 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
               Ошибка обработки резюме
             </h3>
             <p className="mt-2 text-red-700">
-              Не удалось обработать ваше резюме. Попробуйте загрузить файл в другом формате (PDF, DOC, DOCX, TXT) 
+              Не удалось обработать ваше резюме. Попробуйте загрузить файл в другом формате (PDF, DOCX) 
               или обратитесь к нам за помощью.
             </p>
             <div className="mt-4 space-y-2">
@@ -275,7 +274,7 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
                   ? 'bg-green-100 text-green-800'
                   : resume.status === 'parsing' || resume.status === 'pending'
                   ? 'bg-yellow-100 text-yellow-800' 
-                  : resume.status === 'parse_failed'
+                  : resume.status === 'parse_failed' || resume.status === 'rejected'
                   ? 'bg-red-100 text-red-800'
                   : 'bg-gray-100 text-gray-800'
               }`}>
@@ -291,7 +290,10 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
                     Мы готовы!
                   </h4>
                   <p className="text-sm text-green-700 mb-4">
-                    Ваше резюме успешно обработано. Можете приступать к интервью с HR агентом.
+                    Ваше резюме успешно обработано. Можете приступать к собеседованию с HR-агентом.
+                    <br />
+                    <br />
+                    * Вы можете пройти собеседование сегодня до 20:00 МСК
                   </p>
                   <a
                     href={`/interview/${resume.id}`}
@@ -335,7 +337,20 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
               </div>
             )}
 
-            {!['parsed', 'parsing', 'pending', 'parse_failed'].includes(resume.status) && (
+            {resume.status === 'rejected' && (
+              <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-4">
+                <div className="text-center">
+                  <h4 className="text-sm font-medium text-red-900 mb-1">
+                    Резюме не соответствует вакансии
+                  </h4>
+                  <p className="text-xs text-red-700">
+                    К сожалению, ваш опыт не подходит для данной позиции
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!['parsed', 'parsing', 'pending', 'parse_failed', 'rejected'].includes(resume.status) && (
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
                 <div className="text-center">
                   <h4 className="text-sm font-medium text-blue-900 mb-1">
@@ -357,7 +372,7 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-900">
-          Откликнуться на вакансию
+          Откликнуться
         </h3>
         <p className="mt-1 text-sm text-gray-600">
           {vacancyTitle}
@@ -459,14 +474,14 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
                       name="resume_file"
                       type="file"
                       className="sr-only"
-                      accept=".pdf,.doc,.docx,.txt"
+                      accept=".pdf,.docx"
                       onChange={handleFileChange}
                     />
                   </label>
                   <p className="pl-1">или перетащите сюда</p>
                 </div>
                 <p className="text-xs text-gray-500">
-                  PDF, DOC, DOCX, TXT до 10 МБ
+                  PDF, DOCX до 10 МБ
                 </p>
               </div>
             </div>

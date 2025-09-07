@@ -13,11 +13,11 @@ export const vacancyService = {
       })
     }
 
-    const endpoint = `api/v1/vacancies/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+    const endpoint = `v1/vacancies/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
     return kyClient.get(endpoint).json<VacancyRead[]>()
   },
 
   async getVacancy(id: number): Promise<VacancyRead> {
-    return kyClient.get(`api/v1/vacancies/${id}`).json<VacancyRead>()
+    return kyClient.get(`v1/vacancies/${id}`).json<VacancyRead>()
   },
 }
