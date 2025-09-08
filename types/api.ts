@@ -15,9 +15,9 @@ export interface VacancyRead {
   salary_to?: number
   salary_currency?: string
   gross_salary?: boolean
-  company_name: string
+  company_name?: string
   company_description?: string
-  area_name: string
+  area_name?: string
   metro_stations?: string
   address?: string
   professional_roles?: string
@@ -43,9 +43,9 @@ export interface VacancyCreate {
   salary_to?: number
   salary_currency?: string
   gross_salary?: boolean
-  company_name: string
+  company_name?: string
   company_description?: string
-  area_name: string
+  area_name?: string
   metro_stations?: string
   address?: string
   professional_roles?: string

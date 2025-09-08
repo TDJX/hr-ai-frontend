@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { VacancyRead } from '@/types/api'
 import { useVacancies } from '@/hooks/useVacancy'
 import Link from 'next/link'
-import { Search, MapPin, Clock, Banknote } from 'lucide-react'
+import { Search, MapPin, Clock, Banknote, Plus } from 'lucide-react'
+import VacancyUploadForm from '@/components/VacancyUploadForm'
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
   const [searchParams, setSearchParams] = useState({
     active_only: true,
     title: undefined as string | undefined,
@@ -147,7 +149,7 @@ export default function HomePage() {
                   
                   <div className="flex items-center text-gray-600 text-sm">
                     <MapPin className="h-4 w-4 mr-2" />
-                    <span>{vacancy.area_name}</span>
+                    <span>{vacancy.area_name || 'Не указано'}</span>
                   </div>
                   
                   <div className="flex items-center text-gray-600 text-sm">
@@ -157,7 +159,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="text-sm text-gray-700 mb-4">
-                  <p className="font-medium">{vacancy.company_name}</p>
+                  <p className="font-medium">{vacancy.company_name || 'Не указано'}</p>
                   <p className="line-clamp-2 mt-1">{vacancy.description}</p>
                 </div>
 
@@ -187,6 +189,34 @@ export default function HomePage() {
           <p className="text-gray-600">
             Попробуйте изменить параметры поиска или вернитесь позже
           </p>
+        </div>
+      )}
+
+      {/* Create Vacancy Button */}
+      {!showCreateForm && (
+        <div className="flex justify-center pt-8">
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-lg hover:shadow-xl transition-all"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Создать вакансию
+          </button>
+        </div>
+      )}
+
+      {/* Create Vacancy Form */}
+      {showCreateForm && (
+        <div className="space-y-4">
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowCreateForm(false)}
+              className="text-gray-500 hover:text-gray-700 text-sm"
+            >
+              ← Свернуть
+            </button>
+          </div>
+          <VacancyUploadForm />
         </div>
       )}
     </div>

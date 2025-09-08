@@ -1,4 +1,4 @@
-import { kyClient } from '@/lib/ky-client'
+import { kyClient, kyFormClient } from '@/lib/ky-client'
 import { VacancyRead, GetVacanciesParams } from '@/types/api'
 
 export const vacancyService = {
@@ -19,5 +19,20 @@ export const vacancyService = {
 
   async getVacancy(id: number): Promise<VacancyRead> {
     return kyClient.get(`v1/vacancies/${id}`).json<VacancyRead>()
+  },
+
+  async parseFileAsync(file: File, createVacancy: boolean = true): Promise<{
+    message: string
+    task_id: string
+    status: string
+    check_status_url: string
+  }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('create_vacancy', createVacancy.toString())
+
+    return kyFormClient.post('v1/vacancies/parse-file-async', {
+      body: formData
+    }).json()
   },
 }

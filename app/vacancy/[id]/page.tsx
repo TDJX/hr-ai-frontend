@@ -131,7 +131,7 @@ export default function VacancyPage() {
             <div className="flex items-center mb-6">
               <Building className="h-5 w-5 text-gray-400 mr-2" />
               <span className="text-lg font-medium text-gray-900">
-                {vacancy.company_name}
+                {vacancy.company_name || 'Не указано'}
               </span>
             </div>
 
@@ -143,7 +143,7 @@ export default function VacancyPage() {
               
               <div className="flex items-center text-gray-600">
                 <MapPin className="h-4 w-4 mr-2" />
-                <span>{vacancy.area_name}</span>
+                <span>{vacancy.area_name || 'Не указано'}</span>
               </div>
               
               <div className="flex items-center text-gray-600">

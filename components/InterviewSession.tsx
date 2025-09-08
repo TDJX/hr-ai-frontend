@@ -279,7 +279,7 @@ function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            HR Собеседование
+            Собеседование со Стефани
           </h1>
           <p className={`text-sm ${getConnectionStatusColor()}`}>
             {state.connectionState === 'connected' && 'Подключено'}
