@@ -5,10 +5,10 @@ import { Room, RoomEvent, Track, RemoteTrack, LocalTrack } from 'livekit-client'
 import { useTracks, RoomAudioRenderer, LiveKitRoom, useRoomContext } from '@livekit/components-react'
 import { useInterviewToken } from '@/hooks/useResume'
 import { useForceEndInterview } from '@/hooks/useSession'
-import { 
-  Mic, 
-  MicOff, 
-  Phone, 
+import {
+  Mic,
+  MicOff,
+  Phone,
   PhoneOff,
   Volume2,
   VolumeX,
@@ -19,7 +19,7 @@ import {
 
 interface InterviewSessionProps {
   resumeId: number
-  sessionId: number
+  sessionId?: number
   onEnd?: () => void
 }
 
@@ -93,9 +93,9 @@ function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
   const tracks = useTracks([Track.Source.Microphone, Track.Source.ScreenShare], {
     onlySubscribed: false,
   })
-  
+
   const forceEndMutation = useForceEndInterview()
-  
+
   const [state, setState] = useState<InterviewState>({
     isConnected: false,
     isRecording: false,
@@ -112,20 +112,20 @@ function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
     if (!room) return
 
     const handleConnected = () => {
-      setState(prev => ({ 
-        ...prev, 
-        isConnected: true, 
-        connectionState: 'connected' 
+      setState(prev => ({
+        ...prev,
+        isConnected: true,
+        connectionState: 'connected'
       }))
       // Начинаем собеседование
       startInterview()
     }
 
     const handleDisconnected = () => {
-      setState(prev => ({ 
-        ...prev, 
-        isConnected: false, 
-        connectionState: 'disconnected' 
+      setState(prev => ({
+        ...prev,
+        isConnected: false,
+        connectionState: 'disconnected'
       }))
       if (onEnd) {
         onEnd()
@@ -152,7 +152,7 @@ function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
 
   const startInterview = async () => {
     if (!room) return
-    
+
     try {
       // Отправляем сигнал серверу о начале собеседования
       await room.localParticipant.publishData(
@@ -269,7 +269,7 @@ function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <RoomAudioRenderer />
-      
+
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full">
         {/* Header */}
         <div className="text-center mb-8">

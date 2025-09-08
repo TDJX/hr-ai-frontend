@@ -9,7 +9,7 @@ export default function InterviewPage() {
   const params = useParams()
   const router = useRouter()
   const resumeId = parseInt(params.id as string)
-  
+
   const { data: validationData, isLoading, error } = useValidateInterview(resumeId)
 
   const handleInterviewEnd = () => {
@@ -31,12 +31,15 @@ export default function InterviewPage() {
     )
   }
 
+
   if (error || !validationData?.can_interview) {
-    const errorMessage = error?.response?.status === 404 
-      ? 'Резюме не найдено'
-      : error?.response?.status === 400
-      ? 'Резюме еще не готово к собеседованию'
-      : validationData?.message || 'Собеседование недоступно'
+    let errorMessage = ''
+    if (error instanceof Response) {
+      if (error.status === 404) errorMessage = "Резюме не найдено";
+      else if (error.status === 400) errorMessage = "Резюме еще не готово к собеседованию" ;
+      else errorMessage = validationData?.message || 'Собеседование недоступно' ;
+    }
+
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
@@ -78,7 +81,7 @@ export default function InterviewPage() {
             <ArrowLeft className="h-5 w-5 mr-2" />
             Вернуться назад
           </button>
-          
+
           <div className="text-center">
             <h1 className="text-lg font-semibold text-gray-900">
               HR Собеседование
@@ -87,15 +90,15 @@ export default function InterviewPage() {
               Резюме #{resumeId}
             </p>
           </div>
-          
+
           <div className="w-24"></div> {/* Spacer for centering */}
         </div>
       </div>
 
       {/* Interview Session */}
-      <InterviewSession 
-        resumeId={resumeId} 
-        onEnd={handleInterviewEnd}
+      <InterviewSession
+        resumeId={ resumeId }
+        onEnd={ handleInterviewEnd }
       />
     </div>
   )
