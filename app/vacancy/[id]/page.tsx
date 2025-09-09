@@ -74,6 +74,11 @@ export default function VacancyPage() {
     return mapping[schedule as keyof typeof mapping] || schedule
   }
 
+  const formatNullableField = (value: string | null | undefined) => {
+    if (!value || value === 'null') return 'Не указано'
+    return value
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -131,7 +136,7 @@ export default function VacancyPage() {
             <div className="flex items-center mb-6">
               <Building className="h-5 w-5 text-gray-400 mr-2"/>
               <span className="text-lg font-medium text-gray-900">
-                {vacancy.company_name || 'Не указано'}
+                {formatNullableField(vacancy.company_name)}
               </span>
             </div>
 
@@ -143,7 +148,7 @@ export default function VacancyPage() {
 
               <div className="flex items-center text-gray-600">
                 <MapPin className="h-4 w-4 mr-2" />
-                <span>{vacancy.area_name || 'Не указано'}</span>
+                <span>{formatNullableField(vacancy.area_name)}</span>
               </div>
 
               <div className="flex items-center text-gray-600">
@@ -158,7 +163,7 @@ export default function VacancyPage() {
 
               <div className="flex items-center text-gray-600">
                 <Calendar className="h-4 w-4 mr-2"/>
-                <span>{ getScheduleText(vacancy.schedule) }</span>
+                <span>{ formatNullableField(getScheduleText(vacancy.schedule)) }</span>
               </div>
 
               { vacancy.published_at && (
@@ -177,7 +182,7 @@ export default function VacancyPage() {
             </h2>
             <div className="prose prose-gray max-w-none">
               <p className="whitespace-pre-line text-gray-700 leading-relaxed">
-                { vacancy.description }
+                { formatNullableField(vacancy.description) }
               </p>
             </div>
           </div>
@@ -189,7 +194,7 @@ export default function VacancyPage() {
                 Ключевые навыки
               </h2>
               <div className="prose prose-gray max-w-none">
-                <p className="text-gray-700">{ vacancy.key_skills }</p>
+                <p className="text-gray-700">{ formatNullableField(vacancy.key_skills) }</p>
               </div>
             </div>
           ) }
@@ -202,7 +207,7 @@ export default function VacancyPage() {
               </h2>
               <div className="prose prose-gray max-w-none">
                 <p className="whitespace-pre-line text-gray-700 leading-relaxed">
-                  { vacancy.company_description }
+                  { formatNullableField(vacancy.company_description) }
                 </p>
               </div>
             </div>
@@ -218,13 +223,13 @@ export default function VacancyPage() {
                 { vacancy.address && (
                   <div className="flex items-start">
                     <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0"/>
-                    <span>{ vacancy.address }</span>
+                    <span>{ formatNullableField(vacancy.address) }</span>
                   </div>
                 ) }
                 { vacancy.metro_stations && (
                   <div className="flex items-start">
                     <span className="text-sm font-medium mr-2">Метро:</span>
-                    <span className="text-sm">{ vacancy.metro_stations }</span>
+                    <span className="text-sm">{ formatNullableField(vacancy.metro_stations) }</span>
                   </div>
                 ) }
               </div>
@@ -244,7 +249,7 @@ export default function VacancyPage() {
                 { vacancy.contacts_name && (
                   <div className="flex items-center text-gray-700">
                     <Users className="h-4 w-4 mr-2"/>
-                    <span>{ vacancy.contacts_name }</span>
+                    <span>{ formatNullableField(vacancy.contacts_name) }</span>
                   </div>
                 ) }
                 { vacancy.contacts_email && (
@@ -254,7 +259,7 @@ export default function VacancyPage() {
                       href={ `mailto:${ vacancy.contacts_email }` }
                       className="hover:text-primary-600"
                     >
-                      { vacancy.contacts_email }
+                      { formatNullableField(vacancy.contacts_email) }
                     </a>
                   </div>
                 ) }
@@ -265,7 +270,7 @@ export default function VacancyPage() {
                       href={ `tel:${ vacancy.contacts_phone }` }
                       className="hover:text-primary-600"
                     >
-                      { vacancy.contacts_phone }
+                      { formatNullableField(vacancy.contacts_phone) }
                     </a>
                   </div>
                 ) }

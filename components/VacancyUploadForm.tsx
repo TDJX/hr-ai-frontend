@@ -57,7 +57,6 @@ export default function VacancyUploadForm() {
     e.preventDefault()
     
     if (!selectedFile) {
-      alert('Пожалуйста, выберите файл')
       return
     }
 
@@ -71,7 +70,6 @@ export default function VacancyUploadForm() {
       setSelectedFile(null)
     } catch (error) {
       console.error('Ошибка при загрузке файла:', error)
-      alert('Произошла ошибка при загрузке файла')
     }
   }
 

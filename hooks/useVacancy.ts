@@ -7,7 +7,8 @@ export const useVacancies = (params?: GetVacanciesParams) => {
   return useQuery({
     queryKey: ['vacancies', params],
     queryFn: () => vacancyService.getVacancies(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Данные сразу считаются устаревшими
+    refetchInterval: 5000, // Обновлять каждые 5 секунд
     retry: 2,
   })
 }
@@ -23,39 +24,57 @@ export const useVacancy = (id: number) => {
 }
 
 export const useParseVacancyFile = () => {
-  const queryClient = useQueryClient()
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
   const mutation = useMutation({
     mutationFn: ({ file, createVacancy }: { file: File; createVacancy?: boolean }) =>
       vacancyService.parseFileAsync(file, createVacancy),
     onSuccess: (data) => {
-      // Показать уведомление об успешном запуске парсинга
-      alert('Задача парсинга запущена! Скоро вакансия появится в списке.')
-      
-      // Начать опрос списка вакансий каждые 5 секунд
-      pollIntervalRef.current = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ['vacancies'] })
-      }, 5000)
-      
-      // Остановить опрос через 2 минуты
-      setTimeout(() => {
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-          pollIntervalRef.current = null
-        }
-      }, 120000)
+      // Показать toast уведомление
+      showToast('Задача парсинга запущена! Скоро вакансия появится в списке.')
     },
   })
 
-  // Очистить интервал при размонтировании компонента
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-      }
-    }
-  }, [])
-
   return mutation
+}
+
+// Простая функция для показа toast без React компонента
+const showToast = (message: string) => {
+  // Создать элемент toast
+  const toast = document.createElement('div')
+  toast.textContent = message
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    z-index: 9999;
+    max-width: 300px;
+    word-wrap: break-word;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateX(100%);
+  `
+  
+  // Добавить в DOM
+  document.body.appendChild(toast)
+  
+  // Анимация появления
+  setTimeout(() => {
+    toast.style.transform = 'translateX(0)'
+  }, 10)
+  
+  // Удалить через 5 секунд
+  setTimeout(() => {
+    toast.style.opacity = '0'
+    toast.style.transform = 'translateX(100%)'
+    setTimeout(() => {
+      if (toast.parentNode) {
+        document.body.removeChild(toast)
+      }
+    }, 300)
+  }, 10000)
 }
