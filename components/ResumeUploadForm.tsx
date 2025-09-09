@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import InputMask from 'react-input-mask'
 import { ResumeCreate } from '@/types/api'
 import { useCreateResume, useResumesByVacancy } from '@/hooks/useResume'
-import { Upload, FileText, X, CheckCircle, Clock, Loader, AlertCircle } from 'lucide-react'
+import { Upload, FileText, X, CheckCircle, Clock, Loader, AlertCircle, Mic } from 'lucide-react'
 
 interface ResumeUploadFormProps {
   vacancyId: number
@@ -23,6 +23,9 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
   
   const [file, setFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
+  const [micError, setMicError] = useState<string | null>(null)
+  const [isCheckingMic, setIsCheckingMic] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
 
   const createResumeMutation = useCreateResume()
   const { data: existingResumes, isLoading: isLoadingResumes, refetch } = useResumesByVacancy(vacancyId)
@@ -53,25 +56,51 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const validateFile = (file: File) => {
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return false
+    }
+    
+    // Check file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]
+    
+    return allowedTypes.includes(file.type)
+  }
+
+  const handleFileSelect = (selectedFile: File) => {
+    if (validateFile(selectedFile)) {
+      setFile(selectedFile)
+    }
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      // Check file size (max 10MB)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        return
-      }
-      
-      // Check file type
-      const allowedTypes = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ]
-      
-      if (!allowedTypes.includes(selectedFile.type)) {
-        return
-      }
-      
-      setFile(selectedFile)
+      handleFileSelect(selectedFile)
+    }
+  }
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0])
     }
   }
 
@@ -295,12 +324,46 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
                     <br />
                     * Вы можете пройти собеседование сегодня до 20:00 МСК
                   </p>
-                  <a
-                    href={`/interview/${resume.id}`}
-                    className="inline-flex items-center px-6 py-3 bg-green-600 border border-transparent rounded-lg font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105"
-                  >
-                    Начать собеседование
-                  </a>
+                  <div className="space-y-3">
+                    {micError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="flex items-start">
+                          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
+                          <p className="text-sm text-red-700">{micError}</p>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={async () => {
+                        setIsCheckingMic(true)
+                        setMicError(null)
+                        
+                        try {
+                          await navigator.mediaDevices.getUserMedia({ audio: true })
+                          // Если разрешение получено, переходим к интервью
+                          window.location.href = `/interview/${resume.id}`
+                        } catch (err) {
+                          console.error('Microphone permission denied', err)
+                          setMicError('Нужно разрешить доступ к микрофону в настройках браузера для проведения интервью')
+                        } finally {
+                          setIsCheckingMic(false)
+                        }
+                      }}
+                      disabled={isCheckingMic}
+                      className="inline-flex items-center px-6 py-3 bg-green-600 border border-transparent rounded-lg font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isCheckingMic ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Проверяем микрофон...
+                        </>
+                      ) : (
+                        <>
+                          Начать собеседование
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -460,7 +523,17 @@ export default function ResumeUploadForm({ vacancyId, vacancyTitle, onSuccess }:
           </label>
           
           {!file ? (
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-400 transition-colors">
+            <div 
+              className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${
+                dragActive
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-300 hover:border-primary-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
               <div className="space-y-1 text-center">
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 <div className="flex text-sm text-gray-600">

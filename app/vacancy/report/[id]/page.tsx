@@ -44,7 +44,7 @@ export default function VacancyPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <button
-          onClick={ () => router.push(`/vacancy/${vacancyId}`) }
+          onClick={ () => router.back() }
           className="inline-flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-5 w-5 mr-2"/>

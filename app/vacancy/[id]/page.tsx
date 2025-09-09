@@ -13,7 +13,8 @@ import {
   Calendar,
   Phone,
   Mail,
-  Globe, FileText
+  Globe,
+  FileText
 } from 'lucide-react'
 import ResumeUploadForm from '@/components/ResumeUploadForm'
 

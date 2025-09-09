@@ -143,10 +143,12 @@ function InterviewRoom({ resumeId, onEnd, sessionId }: InterviewSessionProps) {
 
     room.on(RoomEvent.Connected, handleConnected)
     room.on(RoomEvent.DataReceived, handleDataReceived)
+    room.on(RoomEvent.Disconnected, handleDisconnected)
 
     return () => {
       room.off(RoomEvent.Connected, handleConnected)
       room.off(RoomEvent.DataReceived, handleDataReceived)
+      room.off(RoomEvent.Disconnected, handleDisconnected)
     }
   }, [room])
 
